@@ -436,7 +436,7 @@ prompt_pure_setup() {
 
 	# borrowed from promptinit, sets the prompt options in case pure was not
 	# initialized via promptinit.
-	setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
+	setopt noprompt{bang,percent,subst} "prompt${^prompt_opts[@]}"
 
 	if [[ -z $prompt_newline ]]; then
 		# This variable needs to be set, usually set by promptinit.
@@ -458,13 +458,18 @@ prompt_pure_setup() {
 	[[ "$SSH_CONNECTION" != '' ]] && prompt_pure_username='%F{242}%n@%m%f'
 
 	# show username@host if root, with username in white
-	[[ $UID -eq 0 ]] && prompt_pure_username='%F{white}%n%f%F{242}@%m%f'
+    if [[ $UID != 0 ]]; then
+        prompt_pure_username='%B%F{cyan}%n%f%F{white}@%F{green}%m%f%b'
+    else
+        prompt_pure_username='%B%F{red}%n%f%F{white}@%F{green}%m%f%b'
+    fi
+        
 
 	# if a virtualenv is activated, display it in grey
 	PROMPT='%(12V.%F{242}%12v%f .)'
 
 	# prompt turns red if the previous command didn't exit with 0
-	PROMPT+='%(?.%F{magenta}.%F{red})${PURE_PROMPT_SYMBOL:-❯}%f '
+	PROMPT+='%(?.%F{white}.%F{red})${PURE_PROMPT_SYMBOL:-❯}%f '
 }
 
 prompt_pure_setup "$@"
