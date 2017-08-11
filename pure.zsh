@@ -110,22 +110,23 @@ prompt_pure_preprompt_render() {
 
 	# Initialize the preprompt array.
 	local -a preprompt_parts
+	#
+	# Username and machine, if applicable.
+	[[ -n $prompt_pure_username ]] && preprompt_parts+=('$prompt_pure_username')
 
 	# Set the path.
-	preprompt_parts+=('%F{blue}%~%f')
+	preprompt_parts+=('%B%F{blue}%~%f%b')
 
 	# Add git branch and dirty status info.
 	typeset -gA prompt_pure_vcs_info
 	if [[ -n $prompt_pure_vcs_info[branch] ]]; then
-		preprompt_parts+=("%F{$git_color}"'${prompt_pure_vcs_info[branch]}${prompt_pure_git_dirty}%f')
+		preprompt_parts+=("%B%F{$git_color}"'${prompt_pure_vcs_info[branch]}${prompt_pure_git_dirty}%f%b')
 	fi
 	# Git pull/push arrows.
 	if [[ -n $prompt_pure_git_arrows ]]; then
 		preprompt_parts+=('%F{cyan}${prompt_pure_git_arrows}%f')
 	fi
 
-	# Username and machine, if applicable.
-	[[ -n $prompt_pure_username ]] && preprompt_parts+=('$prompt_pure_username')
 	# Execution time.
 	[[ -n $prompt_pure_cmd_exec_time ]] && preprompt_parts+=('%F{yellow}${prompt_pure_cmd_exec_time}%f')
 
@@ -149,17 +150,25 @@ prompt_pure_preprompt_render() {
 	)
 
 	PROMPT="${(j..)ps1}"
+	exit_status='%(?..%F{red}[$?]%f)'
+	RPROMPT="${exit_status}"
 
 	# Expand the prompt for future comparision.
 	local expanded_prompt
 	expanded_prompt="${(S%%)PROMPT}"
+	local expanded_rprompt
+	expanded_rprompt="${(S%%)RPROMPT}"
 
-	if [[ $1 != precmd ]] && [[ $prompt_pure_last_prompt != $expanded_prompt ]]; then
+	if [[ $1 != precmd ]] &&
+		[[ $prompt_pure_last_prompt != $expanded_prompt ||
+		   $prompt_pure_last_rprompt != $expanded_rprompt ]]
+	then
 		# Redraw the prompt.
 		zle && zle .reset-prompt
 	fi
 
 	prompt_pure_last_prompt=$expanded_prompt
+	prompt_pure_last_rprompt=$expanded_rprompt
 }
 
 prompt_pure_precmd() {
@@ -170,8 +179,8 @@ prompt_pure_precmd() {
 	# with the initial preprompt rendering
 	prompt_pure_cmd_timestamp=
 
-	# shows the full path in the title
-	prompt_pure_set_title 'expand-prompt' '%~'
+	# shows current directory in the title
+	prompt_pure_set_title 'expand-prompt' '%2~'
 
 	# preform async git dirty check and fetch
 	prompt_pure_async_tasks
@@ -454,16 +463,15 @@ prompt_pure_setup() {
 	add-zsh-hook precmd prompt_pure_precmd
 	add-zsh-hook preexec prompt_pure_preexec
 
-	# show username@host if logged in through SSH
-	[[ "$SSH_CONNECTION" != '' ]] && prompt_pure_username='%F{242}%n@%m%f'
+	## show username@host if logged in through SSH
+	#[[ "$SSH_CONNECTION" != '' ]] && prompt_pure_username='%F{242}%n@%m%f'
 
 	# show username@host if root, with username in white
-    if [[ $UID != 0 ]]; then
-        prompt_pure_username='%B%F{cyan}%n%f%F{white}@%F{green}%m%f%b'
-    else
-        prompt_pure_username='%B%F{red}%n%f%F{white}@%F{green}%m%f%b'
-    fi
-        
+	if [[ $UID != 0 ]]; then
+		prompt_pure_username='%B%F{cyan}%n%f%F{white}@%F{green}%m%f%b'
+	else
+		prompt_pure_username='%B%F{red}%n%f%F{white}@%F{green}%m%f%b'
+	fi
 
 	# if a virtualenv is activated, display it in grey
 	PROMPT='%(12V.%F{242}%12v%f .)'
