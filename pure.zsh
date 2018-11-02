@@ -545,7 +545,7 @@ prompt_pure_state_setup() {
 
 	# show username@host if root, with username in white
 	if [[ $UID != 0 ]]; then
-		prompt_pure_username='%B%F{cyan}%n%f%F{white}@%F{green}%m%f%b'
+		prompt_pure_username='%B%F{$PURE_PROMPT_NAME_COLOR}%n%f%F{white}@%F{green}%m%f%b'
 	else
 		prompt_pure_username='%B%F{red}%n%f%F{white}@%F{green}%m%f%b'
 	fi
